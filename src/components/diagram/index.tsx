@@ -2,7 +2,7 @@ import {FC, useEffect, useRef, useState} from "react";
 import Entity from "../../entity";
 import "./index.css";
 import CoordTransform from "../../util/coordTrans";
-import {Rectangle} from "../../util/interface";
+import Bound from "../../util/bound";
 
 interface DiagramProps {
     width: string;
@@ -86,12 +86,12 @@ const Diagram: FC<DiagramProps> = (props) => {
     };
 
     const zoomToBound = () => {
-        const bounds: Rectangle[] = [];
+        const bounds: Bound[] = [];
         entities.forEach((ent) => {
             bounds.push(ent.bound());
         });
-        const unionBound = Rectangle.getUnionBound(bounds);
-        const deviceUnionBound = new Rectangle(ctf.worldToDevice_Point(unionBound.max), ctf.worldToDevice_Point(unionBound.min));
+        const unionBound = Bound.getUnionBound(bounds);
+        const deviceUnionBound = new Bound(ctf.worldToDevice_Point(unionBound.max), ctf.worldToDevice_Point(unionBound.min));
         const realMargin = margin ? margin : 5;
         const widthRatio =  (canvasRef.current!.clientWidth - 2 * realMargin) / deviceUnionBound.width;
         const heightRatio = (canvasRef.current!.clientHeight - 2 * realMargin) / deviceUnionBound.height;
