@@ -22,8 +22,8 @@ export class Line extends Entity {
     }
     public draw = (ctx: CanvasRenderingContext2D, ctf: CoordTransform) => {
         // convert
-        const p1 = ctf.worldToDevice(this.point1);
-        const p2 = ctf.worldToDevice(this.point2);
+        const p1 = ctf.worldToDevice_Point(this.point1);
+        const p2 = ctf.worldToDevice_Point(this.point2);
 
         // paint
         ctx.strokeStyle = this.color;
@@ -44,13 +44,13 @@ export class Circle extends Entity {
         this.radius = radius;
     }
     public draw = (ctx: CanvasRenderingContext2D, ctf: CoordTransform) => {
-        // convert
-        const o = ctf.worldToDevice(this.origin);
-
+        // convert: Point and length
+        const o = ctf.worldToDevice_Point(this.origin);
+        const r = ctf.worldToDevice_Len * this.radius;
         // paint
         ctx.strokeStyle = this.color;
         ctx.beginPath();
-        ctx.arc(o.X, o.Y, this.radius, 0, 2 * Math.PI, true);
+        ctx.arc(o.X, o.Y, r, 0, 2 * Math.PI, true);
         ctx.stroke();
         ctx.closePath();
     };

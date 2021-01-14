@@ -9,13 +9,17 @@ interface DiagramProps {
     entities: Array<Entity>
 }
 
+const minScale = 0.001;
+const maxScale = 1000;
+
 const Diagram: FC<DiagramProps> = (props) => {
     const {height, width, entities} = props;
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [ctf] = useState(new CoordTransform()); // coordinate transform
     const [mouseDown, setMouseDown] = useState<boolean>(false);
-
+    const [scale, setScale] = useState<number>(1); // zoom scale
+    
     useEffect(() => {
         const canvas = canvasRef.current as HTMLCanvasElement;
         const container = containerRef.current as HTMLDivElement;
@@ -31,7 +35,6 @@ const Diagram: FC<DiagramProps> = (props) => {
         canvas.height = canvas.offsetHeight;
     }, []);
 
-    // paint
     useEffect(() => {
         paint();
     }, []);
@@ -46,18 +49,27 @@ const Diagram: FC<DiagramProps> = (props) => {
         }
     }
 
-    const onMouseDown:React.MouseEventHandler<HTMLCanvasElement> = (event) => {
+    const onMouseDown:React.MouseEventHandler<HTMLCanvasElement> = () => {
         setMouseDown(true);
     };
-    const onMouseUp:React.MouseEventHandler<HTMLCanvasElement> = (event) => {
+    const onMouseUp:React.MouseEventHandler<HTMLCanvasElement> = () => {
         setMouseDown(false);
     };
-
     const onMouseMove:React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         if (mouseDown) {
             ctf.displacement({X: event.movementX, Y: event.movementY});
             paint();
         }
+    };
+    const onMouseWheel:React.WheelEventHandler<HTMLCanvasElement> = (event) => {
+        const resScale = scale * (1 - event.deltaY / 1000);
+        if (resScale <= maxScale && resScale >= minScale) {
+            ctf.zoom({X: event.clientX, Y: event.clientY}, (1 - event.deltaY / 1000));
+            paint();
+            setScale(resScale);
+        }
+
+        console.log(event.clientX, event.clientY);
     };
 
     return (
@@ -68,6 +80,7 @@ const Diagram: FC<DiagramProps> = (props) => {
                 onMouseDown={onMouseDown}
                 onMouseUp={onMouseUp}
                 onMouseMove={onMouseMove}
+                onWheel={onMouseWheel}
             >
                 Sorry, this browser does not support <i>canvas</i>!
             </canvas>
