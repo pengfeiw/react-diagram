@@ -4,7 +4,8 @@ import {Line, Circle} from "./entity";
 
 const ents = [
     new Line({X: 100, Y: 100}, {X:200, Y: 200 }, "red"),
-    new Circle({X: 100, Y: 100}, 50, "green")
+    new Circle({X: 100, Y: 100}, 50, "green"),
+    new Line({X: -100, Y: -30}, {X:300, Y: 50 }, "black")
 ];
 
 const App: FC = () => {

@@ -2,6 +2,7 @@ import {FC, useEffect, useRef, useState} from "react";
 import Entity from "../../entity";
 import "./index.css";
 import CoordTransform from "../../util/coordTrans";
+import {Rectangle} from "../../util/interface";
 
 interface DiagramProps {
     width: string;
@@ -78,6 +79,39 @@ const Diagram: FC<DiagramProps> = (props) => {
             setScale(resScale);
         }
     };
+    const onMouseDbClick: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
+        if (event.button === 0) {
+            zoomToBound();
+        }
+    };
+
+    const zoomToBound = () => {
+        const bounds: Rectangle[] = [];
+        entities.forEach((ent) => {
+            bounds.push(ent.bound());
+        });
+        const unionBound = Rectangle.getUnionBound(bounds);
+        const deviceUnionBound = new Rectangle(ctf.worldToDevice_Point(unionBound.max), ctf.worldToDevice_Point(unionBound.min));
+        const realMargin = margin ? margin : 5;
+        const widthRatio =  (canvasRef.current!.clientWidth - 2 * realMargin) / deviceUnionBound.width;
+        const heightRatio = (canvasRef.current!.clientHeight - 2 * realMargin) / deviceUnionBound.height;
+
+        const clientCenter = {
+            X: canvasRef.current!.clientWidth * 0.5,
+            Y: canvasRef.current!.clientHeight * 0.5
+        };
+
+        const moveVector = {
+            X: clientCenter.X - 0.5 * (deviceUnionBound.max.X + deviceUnionBound.min.X),
+            Y: clientCenter.Y - 0.5 * (deviceUnionBound.max.Y + deviceUnionBound.min.Y)
+        };
+
+        ctf.displacement(moveVector);
+        ctf.zoom(clientCenter, Math.min(widthRatio, heightRatio));
+        setScale(scale * Math.min(widthRatio, heightRatio));
+
+        paint();
+    };
 
     return (
         <div id="container" ref={containerRef}>
@@ -88,6 +122,7 @@ const Diagram: FC<DiagramProps> = (props) => {
                 onMouseUp={onMouseUp}
                 onMouseMove={onMouseMove}
                 onWheel={onMouseWheel}
+                onDoubleClick={onMouseDbClick}
             >
                 Sorry, this browser does not support <i>canvas</i>!
             </canvas>

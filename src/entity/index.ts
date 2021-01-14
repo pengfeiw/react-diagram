@@ -1,7 +1,8 @@
 // Entity
 import CoordTransform from "../util/coordTrans";
-import {Point} from "../util/interface";
-export type {Point};
+import {Point, Rectangle} from "../util/interface";
+export type {Point, Rectangle};
+
 export default abstract class Entity {
     public color: string;
     public constructor(color="black") {
@@ -10,6 +11,7 @@ export default abstract class Entity {
 
     // draw shape
     public abstract draw(ctx: CanvasRenderingContext2D, ctf: CoordTransform): void
+    public abstract bound(): Rectangle;
 }
 
 export class Line extends Entity {
@@ -33,6 +35,14 @@ export class Line extends Entity {
         ctx.stroke();
         ctx.closePath();
     };
+
+    public bound = () => {
+        const min_x = Math.min(this.point1.X, this.point2.X);
+        const max_x = Math.max(this.point1.X, this.point2.X);
+        const min_y = Math.min(this.point1.Y, this.point2.Y);
+        const max_y = Math.max(this.point1.Y, this.point2.Y);
+        return new Rectangle({X: max_x, Y: max_y}, {X: min_x, Y: min_y});
+    };
 }
 
 export class Circle extends Entity {
@@ -54,4 +64,17 @@ export class Circle extends Entity {
         ctx.stroke();
         ctx.closePath();
     };
+
+    public bound = () => {
+        const maxPoint = {
+            X: this.origin.X + this.radius,
+            Y: this.origin.Y + this.radius
+        };
+        const minPoint = {
+            X: this.origin.X - this.radius,
+            Y: this.origin.Y - this.radius
+        };
+        
+        return new Rectangle(maxPoint, minPoint);
+    }
 }
