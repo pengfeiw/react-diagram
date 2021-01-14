@@ -6,14 +6,13 @@ import CoordTransform from "../../util/coordTrans";
 interface DiagramProps {
     width: string;
     height: string;
-    entities: Array<Entity>
+    entities: Array<Entity>;
+    scaleLimit?: number;
+    margin?: number;
 }
 
-const minScale = 0.001;
-const maxScale = 1000;
-
 const Diagram: FC<DiagramProps> = (props) => {
-    const {height, width, entities} = props;
+    const {height, width, entities, scaleLimit, margin} = props;
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [ctf] = useState(new CoordTransform()); // coordinate transform
@@ -49,11 +48,15 @@ const Diagram: FC<DiagramProps> = (props) => {
         }
     }
 
-    const onMouseDown:React.MouseEventHandler<HTMLCanvasElement> = () => {
-        setMouseDown(true);
+    const onMouseDown:React.MouseEventHandler<HTMLCanvasElement> = (event) => {
+        if (event.button === 1) {
+            setMouseDown(true);
+        }
     };
-    const onMouseUp:React.MouseEventHandler<HTMLCanvasElement> = () => {
-        setMouseDown(false);
+    const onMouseUp:React.MouseEventHandler<HTMLCanvasElement> = (event) => {
+        if (event.button === 1) {
+            setMouseDown(false);
+        }
     };
     const onMouseMove:React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         if (mouseDown) {
@@ -63,13 +66,17 @@ const Diagram: FC<DiagramProps> = (props) => {
     };
     const onMouseWheel:React.WheelEventHandler<HTMLCanvasElement> = (event) => {
         const resScale = scale * (1 - event.deltaY / 1000);
+        let minScale = 0.001;
+        let maxScale = 1000;
+        if (scaleLimit !== undefined) {
+            minScale = 1 / scaleLimit;
+            maxScale = scaleLimit;
+        }
         if (resScale <= maxScale && resScale >= minScale) {
             ctf.zoom({X: event.clientX, Y: event.clientY}, (1 - event.deltaY / 1000));
             paint();
             setScale(resScale);
         }
-
-        console.log(event.clientX, event.clientY);
     };
 
     return (
