@@ -79,3 +79,35 @@ export class Circle extends Entity {
         return new Bound(maxPoint, minPoint);
     }
 }
+
+export class Rectangle extends Entity {
+    public location: Point;
+    public width: number;
+    public height: number;
+    public constructor(location: Point, width: number, height: number, color?: string) {
+        super(color);
+        this.location = location;
+        this.width = width;
+        this.height = height;
+    }
+    public draw = (ctx: CanvasRenderingContext2D, ctf: CoordTransform) => {
+        // convert: Point and length
+        const lt = ctf.worldToDevice_Point(this.location);
+        const w = ctf.worldToDevice_Len * this.width;
+        const h = ctf.worldToDevice_Len * this.height;
+
+        // paint
+        ctx.strokeStyle = this.color;
+        ctx.beginPath();
+        ctx.strokeRect(lt.X, lt.Y, w, h);
+        ctx.closePath();
+    };
+    public bound = () => {
+        const maxPoint = {
+            X: this.location.X + this.width,
+            Y: this.location.Y + this.height
+        };
+        const minPoint = this.location;
+        return new Bound(maxPoint, minPoint);
+    };
+}
