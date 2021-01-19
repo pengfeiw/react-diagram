@@ -1,8 +1,10 @@
 import {FC, useEffect, useRef, useState} from "react";
-import Entity from "../../entity";
+import Entity, {Rectangle} from "../../entity";
 import "./index.css";
 import CoordTransform from "../../util/coordTrans";
 import Bound from "../../util/bound";
+import {MouseStatus} from "./interface";
+import Layer from "./layer";
 
 interface DiagramProps {
     width: string;
@@ -12,27 +14,33 @@ interface DiagramProps {
     margin?: number;
 }
 
+const defaultLayer = new Layer("0");
 const Diagram: FC<DiagramProps> = (props) => {
     const {height, width, entities, scaleLimit, margin} = props;
+    const [layer, setLayer] = useState([defaultLayer]);
+    const [activeLayer, setActiveLayer] = useState(defaultLayer);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [ctf] = useState(new CoordTransform()); // coordinate transform
     const [mouseDown, setMouseDown] = useState<boolean>(false);
     const [scale, setScale] = useState<number>(1); // zoom scale
-    
+    const [mask, setMask] = useState<boolean>(false);
+
     useEffect(() => {
         const canvas = canvasRef.current as HTMLCanvasElement;
         const container = containerRef.current as HTMLDivElement;
-
         // set size of container
         container.style.width = width;
         container.style.height = height;
 
         // set size of canvas
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
+        const initCanvas = (canvas: HTMLCanvasElement) => {
+            canvas.style.width = "100%";
+            canvas.style.height = "100%";
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        };
+        initCanvas(canvas);
     }, []);
 
     useEffect(() => {
@@ -48,24 +56,24 @@ const Diagram: FC<DiagramProps> = (props) => {
             }
         }
     }
-
-    const onMouseDown:React.MouseEventHandler<HTMLCanvasElement> = (event) => {
-        if (event.button === 1) {
-            setMouseDown(true);
-        }
+    const onMouseDown: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
+        setMouseDown(true);
     };
-    const onMouseUp:React.MouseEventHandler<HTMLCanvasElement> = (event) => {
-        if (event.button === 1) {
-            setMouseDown(false);
-        }
+    const onMouseUp: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
+        setMouseDown(false);
     };
-    const onMouseMove:React.MouseEventHandler<HTMLCanvasElement> = (event) => {
+    const onMouseMove: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         if (mouseDown) {
-            ctf.displacement({X: event.movementX, Y: event.movementY});
-            paint();
+            console.log(event);
+            if (event.buttons === 4) {
+                // 平移
+                ctf.displacement({X: event.movementX, Y: event.movementY});
+                paint();
+            }
         }
     };
-    const onMouseWheel:React.WheelEventHandler<HTMLCanvasElement> = (event) => {
+
+    const onMouseWheel: React.WheelEventHandler<HTMLCanvasElement> = (event) => {
         const resScale = scale * (1 - event.deltaY / 1000);
         let minScale = 0.001;
         let maxScale = 1000;
@@ -84,6 +92,20 @@ const Diagram: FC<DiagramProps> = (props) => {
             zoomToBound();
         }
     };
+    const onKeyDown: React.KeyboardEventHandler<HTMLCanvasElement> = (event) => {
+        const keyCode = (event as any).code;
+        console.log(keyCode);
+        switch (keyCode) {
+            case "KeyR":
+                setMask(true);
+                break;
+            case "Escape":
+                setMask(false);
+                break;
+            default:
+                break;
+        }
+    };
 
     const zoomToBound = () => {
         const bounds: Bound[] = [];
@@ -93,7 +115,7 @@ const Diagram: FC<DiagramProps> = (props) => {
         const unionBound = Bound.getUnionBound(bounds);
         const deviceUnionBound = new Bound(ctf.worldToDevice_Point(unionBound.max), ctf.worldToDevice_Point(unionBound.min));
         const realMargin = margin ? margin : 5;
-        const widthRatio =  (canvasRef.current!.clientWidth - 2 * realMargin) / deviceUnionBound.width;
+        const widthRatio = (canvasRef.current!.clientWidth - 2 * realMargin) / deviceUnionBound.width;
         const heightRatio = (canvasRef.current!.clientHeight - 2 * realMargin) / deviceUnionBound.height;
 
         const clientCenter = {
@@ -114,7 +136,10 @@ const Diagram: FC<DiagramProps> = (props) => {
     };
 
     return (
-        <div id="container" ref={containerRef}>
+        <div id="container"
+            className={mask ? "mask" : ""}
+            ref={containerRef}
+        >
             <canvas
                 id="canvas"
                 ref={canvasRef}
@@ -123,6 +148,8 @@ const Diagram: FC<DiagramProps> = (props) => {
                 onMouseMove={onMouseMove}
                 onWheel={onMouseWheel}
                 onDoubleClick={onMouseDbClick}
+                onKeyDown={onKeyDown}
+                tabIndex={-1}
             >
                 Sorry, this browser does not support <i>canvas</i>!
             </canvas>
