@@ -1,5 +1,5 @@
 import Entity from "../../../entity";
-
+import CoordTransform from "../../../util/coordTrans";
 class Layer {
     /**
      * the color of layer
@@ -18,6 +18,10 @@ class Layer {
      */
     private entities: Entity[];
     /**
+     * the canvas associated with this layer
+     */
+    private _canvas: HTMLCanvasElement;
+    /**
      * @param name the name of layer
      * @param ents the entities on the layer
      * @param visible wether the layer is visible
@@ -28,6 +32,13 @@ class Layer {
         this.entities = [];
         this._color = color;
         this._visible = true;
+        this._canvas = document.createElement("canvas");
+    }
+    /**
+     * the canvas associated with this layer
+     */
+    public get canvas() {
+        return this._canvas;
     }
     public get color() {
         return this._color;
@@ -92,6 +103,23 @@ class Layer {
             return;
         }
         this.toogleLayer();
+    }
+
+    /**
+     * draw entity
+     * @param ctf the coordinate transform
+     */
+    public draw = (ctf: CoordTransform) => {
+        const ctx = this.canvas.getContext("2d");
+        if (ctx) {
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            for (let i = 0; i < this.entities.length; i++) {
+                if (this.entities[i].color === "byLayer") {
+                    this.entities[i].color = this._color;
+                }
+                this.entities[i].draw(ctx, ctf);
+            }
+        }
     }
 }
 

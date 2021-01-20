@@ -19,7 +19,6 @@ export default class Bound {
         return this.maxPoint.Y - this.minPoint.Y;
     }
 
-
     // get the boundingBox
     public static getUnionBound = (bounds: Bound[]) => {
         if (bounds.length === 0) {
