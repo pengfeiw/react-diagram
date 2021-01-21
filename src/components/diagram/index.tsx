@@ -14,10 +14,11 @@ interface DiagramProps {
     margin?: number;
 }
 const defaultLayer = new Layer("0");
+const _layers = [defaultLayer];
 let mouseDown = false;
 const Diagram = forwardRef((props: DiagramProps, ref) => {
     const {height, width, entities, scaleLimit, margin} = props;
-    const [layers, setLayers] = useState([defaultLayer]);
+    const layers = useRef(_layers);
     const [activeLayer, setActiveLayer] = useState(defaultLayer);
     const containerRef = useRef<HTMLDivElement>(null);
     const [ctf] = useState(new CoordTransform()); // coordinate transform
@@ -39,13 +40,9 @@ const Diagram = forwardRef((props: DiagramProps, ref) => {
         // set size of container
         container.style.width = width;
         container.style.height = height;
-
-        layers.forEach((layer) => {
-            const canvas = layer.canvas;
-            container.appendChild(canvas);
-            initCanvas(canvas);
-        });
-
+        const canvas = defaultLayer.canvas;
+        container.appendChild(canvas);
+        initCanvas(canvas);
         defaultLayer.addEntity(entities);
         defaultLayer.canvas.addEventListener("mousedown", onMouseDown);
         defaultLayer.canvas.addEventListener("mouseup", onMouseUp);
@@ -53,19 +50,18 @@ const Diagram = forwardRef((props: DiagramProps, ref) => {
         defaultLayer.canvas.addEventListener("wheel", onMouseWheel);
         defaultLayer.canvas.addEventListener("dblclick", onMouseDbClick);
         defaultLayer.canvas.style.zIndex = "1";
-        setActiveLayer(defaultLayer);
+        defaultLayer.draw(ctf);
     }, []);
 
     useEffect(() => {
-        paint();
+        paint()
     }, []);
 
     /**
      * @param layer the layer be added
      */
     const addLayer = (layer: Layer) => {
-        const resLayers = layers.concat(layer);
-        setLayers(resLayers);
+        _layers.push(layer);
         const container = containerRef.current as HTMLDivElement;
         container.appendChild(layer.canvas);
         initCanvas(layer.canvas);
@@ -76,9 +72,7 @@ const Diagram = forwardRef((props: DiagramProps, ref) => {
         addLayer
     }));
     const paint = () => {
-        console.log(layers);
-
-        layers.forEach((layer) => {
+        layers.current.forEach((layer) => {
             layer.draw(ctf);
         });
     }
@@ -108,8 +102,8 @@ const Diagram = forwardRef((props: DiagramProps, ref) => {
         }
         if (resScale <= maxScale && resScale >= minScale) {
             ctf.zoom({X: event.clientX, Y: event.clientY}, (1 - event.deltaY / 1000));
-            paint();
             setScale(resScale);
+            paint();
         }
     };
     const onMouseDbClick = (event: MouseEvent) => {
@@ -156,7 +150,6 @@ const Diagram = forwardRef((props: DiagramProps, ref) => {
         ctf.displacement(moveVector);
         ctf.zoom(clientCenter, Math.min(widthRatio, heightRatio));
         setScale(scale * Math.min(widthRatio, heightRatio));
-
         paint();
     };
 
