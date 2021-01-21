@@ -144,7 +144,7 @@ const Diagram: FC<DiagramProps> = (props) => {
                 Sorry, this browser does not support <i>canvas</i>!
             </canvas>
             {
-                layers.map((layer) => (<Canvas key={layer.name} ctf={ctf} color={layer.color} entities={layer.entities} />))
+                layers.map((layer) => (<Canvas style={{display: layer.visible ? "block" : "none"}} key={layer.name} ctf={ctf} color={layer.color} entities={layer.entities} />))
             }
         </div>
     );
