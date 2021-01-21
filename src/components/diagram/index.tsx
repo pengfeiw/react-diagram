@@ -128,7 +128,11 @@ const Diagram = forwardRef((props: DiagramProps, ref) => {
 
     const zoomToBound = () => {
         const bounds: Bound[] = [];
-        entities.forEach((ent) => {
+        const allEntities:Entity[] = [];
+        layers.current.forEach((layer) => {
+            allEntities.push(...layer.entities);
+        });
+        allEntities.forEach((ent) => {
             bounds.push(ent.bound());
         });
         const unionBound = Bound.getUnionBound(bounds);

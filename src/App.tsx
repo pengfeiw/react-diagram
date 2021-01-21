@@ -1,6 +1,5 @@
 import Diagram from "./components/diagram";
-// import Test from "./components/test";
-import react, {FC, useEffect, useRef} from "react";
+import {FC, useRef} from "react";
 import {Line, Circle, Rectangle} from "./entity";
 import Layer from "./components/diagram/layer";
 
@@ -19,7 +18,7 @@ const App: FC = () => {
         if (diagram) {
             const layer: Layer = new Layer("layer1", "red");
             layer.addEntity(new Line({X: 1000, Y: -100}, {X: 200, Y: 200}, "byLayer"));
-            layer.addEntity(new Rectangle({X: 1000, Y: 1000}, 800, 500, "white"));
+            layer.addEntity(new Rectangle({X: 1000, Y: 1000}, 800, 500, "green"));
             diagram.addLayer(layer);
         }
     };

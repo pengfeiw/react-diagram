@@ -5,18 +5,30 @@ import Bound from "../util/bound";
 export type {Point};
 
 export default abstract class Entity {
+    /**
+     * @member color if the color is 'bylayer', the color is resolved by the layer it belong.
+     */
     public color: string;
     public constructor(color="black") {
         this.color = color;
     }
-
     // draw shape
     public abstract draw(ctx: CanvasRenderingContext2D, ctf: CoordTransform): void
+
+    /**
+     * compute the bounding box
+     */
     public abstract bound(): Bound;
 }
 
 export class Line extends Entity {
+    /**
+     * the ent point of line
+     */
     public point1: Point;
+    /**
+     * the ent point of line
+     */
     public point2: Point;
     public constructor(point1: Point, point2: Point, color?: string) {
         super(color);
@@ -47,7 +59,13 @@ export class Line extends Entity {
 }
 
 export class Circle extends Entity {
+    /**
+     * the origin(center) of circle
+     */
     public origin: Point;
+    /**
+     * the radius of circle
+     */
     public radius: number;
     public constructor(origin: Point, radius: number, color?: string) {
         super(color);
@@ -81,8 +99,17 @@ export class Circle extends Entity {
 }
 
 export class Rectangle extends Entity {
+    /**
+     * the left top point of rectangle
+     */
     public location: Point;
+    /**
+     * the width of rectangle
+     */
     public width: number;
+    /**
+     * the height of rectangle
+     */
     public height: number;
     public constructor(location: Point, width: number, height: number, color?: string) {
         super(color);

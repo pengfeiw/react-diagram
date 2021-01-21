@@ -16,7 +16,7 @@ class Layer {
     /**
      * the entities on the layer
      */
-    private entities: Entity[];
+    private _entities: Entity[];
     /**
      * the canvas associated with this layer
      */
@@ -29,7 +29,7 @@ class Layer {
      */
     public constructor(name: string, color = "white") {
         this.name = name;
-        this.entities = [];
+        this._entities = [];
         this._color = color;
         this._visible = true;
         this._canvas = document.createElement("canvas");
@@ -46,6 +46,9 @@ class Layer {
     public get visible() {
         return this._visible;
     }
+    public get entities() {
+        return this._entities;
+    }
 
     /**
      * add one entity.
@@ -59,14 +62,14 @@ class Layer {
     public addEntity(ents: Entity[]): void;
 
     public addEntity(entity: any) {
-        this.entities = this.entities.concat(entity);
+        this._entities = this._entities.concat(entity);
     }
 
     /**
      * clear the layer.
      */
     public clear = () => {
-        this.entities = [];
+        this._entities = [];
     }
 
     /**
@@ -113,11 +116,11 @@ class Layer {
         const ctx = this.canvas.getContext("2d");
         if (ctx) {
             ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            for (let i = 0; i < this.entities.length; i++) {
-                if (this.entities[i].color === "byLayer") {
-                    this.entities[i].color = this._color;
+            for (let i = 0; i < this._entities.length; i++) {
+                if (this._entities[i].color === "byLayer") {
+                    this._entities[i].color = this._color;
                 }
-                this.entities[i].draw(ctx, ctf);
+                this._entities[i].draw(ctx, ctf);
             }
         }
     }
