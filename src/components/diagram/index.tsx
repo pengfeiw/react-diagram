@@ -1,27 +1,24 @@
-import {FC, useEffect, useRef, useState, forwardRef, useImperativeHandle} from "react";
-import Entity, {Rectangle} from "../../entity";
+import {FC, useEffect, useRef, useState} from "react";
+import Entity from "../../entity";
 import "./index.css";
 import CoordTransform from "../../util/coordTrans";
 import Bound from "../../util/bound";
-import {MouseStatus} from "./interface";
 import Layer from "./layer";
+import Canvas from "./Canvas";
 
 interface DiagramProps {
     width: string;
     height: string;
-    entities: Array<Entity>;
     scaleLimit?: number;
     margin?: number;
+    layers: Layer[]
 }
-const defaultLayer = new Layer("0");
-const _layers = [defaultLayer];
 let mouseDown = false;
-const Diagram = forwardRef((props: DiagramProps, ref) => {
-    const {height, width, entities, scaleLimit, margin} = props;
-    const layers = useRef(_layers);
-    const [activeLayer, setActiveLayer] = useState(defaultLayer);
+const Diagram: FC<DiagramProps> = (props) => {
+    const {height, width, scaleLimit, margin, layers} = props;
     const containerRef = useRef<HTMLDivElement>(null);
-    const [ctf] = useState(new CoordTransform()); // coordinate transform
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [ctf, setCtf] = useState(new CoordTransform()); // coordinate transform
     const [scale, setScale] = useState<number>(1); // zoom scale
     const [mask, setMask] = useState<boolean>(false);
 
@@ -37,62 +34,34 @@ const Diagram = forwardRef((props: DiagramProps, ref) => {
 
     useEffect(() => {
         const container = containerRef.current as HTMLDivElement;
+        const canvas = canvasRef.current as HTMLCanvasElement;
         // set size of container
         container.style.width = width;
         container.style.height = height;
-        const canvas = defaultLayer.canvas;
-        container.appendChild(canvas);
+
+        // set operate canvas
+        canvas.style.zIndex = "1";
         initCanvas(canvas);
-        defaultLayer.addEntity(entities);
-        defaultLayer.canvas.addEventListener("mousedown", onMouseDown);
-        defaultLayer.canvas.addEventListener("mouseup", onMouseUp);
-        defaultLayer.canvas.addEventListener("mousemove", onMouseMove);
-        defaultLayer.canvas.addEventListener("wheel", onMouseWheel);
-        defaultLayer.canvas.addEventListener("dblclick", onMouseDbClick);
-        defaultLayer.canvas.style.zIndex = "1";
-        defaultLayer.draw(ctf);
     }, []);
 
-    useEffect(() => {
-        paint()
-    }, []);
-
-    /**
-     * @param layer the layer be added
-     */
-    const addLayer = (layer: Layer) => {
-        _layers.push(layer);
-        const container = containerRef.current as HTMLDivElement;
-        container.appendChild(layer.canvas);
-        initCanvas(layer.canvas);
-        layer.draw(ctf);
-    };
-
-    useImperativeHandle(ref, () => ({
-        addLayer
-    }));
-    const paint = () => {
-        layers.current.forEach((layer) => {
-            layer.draw(ctf);
-        });
-    }
-    const onMouseDown = (event: MouseEvent) => {
+    const onMouseDown: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         mouseDown = true;
     };
-    const onMouseUp = (event: MouseEvent) => {
+    const onMouseUp: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         mouseDown = false;
     };
-    const onMouseMove = (event: MouseEvent) => {
+    const onMouseMove: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         if (mouseDown) {
             if (event.buttons === 4) {
                 // 平移
-                ctf.displacement({X: event.movementX, Y: event.movementY});
-                paint();
+                const newCtf = new CoordTransform(ctf.worldOrigin, ctf.worldToDevice_Len);
+                newCtf.displacement({X: event.movementX, Y: event.movementY});
+                setCtf(newCtf);
             }
         }
     };
 
-    const onMouseWheel = (event: WheelEvent) => {
+    const onMouseWheel: React.WheelEventHandler<HTMLCanvasElement> = (event) => {
         const resScale = scale * (1 - event.deltaY / 1000);
         let minScale = 0.001;
         let maxScale = 1000;
@@ -101,12 +70,13 @@ const Diagram = forwardRef((props: DiagramProps, ref) => {
             maxScale = scaleLimit;
         }
         if (resScale <= maxScale && resScale >= minScale) {
-            ctf.zoom({X: event.clientX, Y: event.clientY}, (1 - event.deltaY / 1000));
+            const newCtf = new CoordTransform(ctf.worldOrigin, ctf.worldToDevice_Len);
+            newCtf.zoom({X: event.clientX, Y: event.clientY}, (1 - event.deltaY / 1000));
+            setCtf(newCtf);
             setScale(resScale);
-            paint();
         }
     };
-    const onMouseDbClick = (event: MouseEvent) => {
+    const onMouseDbClick: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         if (event.button === 0) {
             zoomToBound();
         }
@@ -128,8 +98,8 @@ const Diagram = forwardRef((props: DiagramProps, ref) => {
 
     const zoomToBound = () => {
         const bounds: Bound[] = [];
-        const allEntities:Entity[] = [];
-        layers.current.forEach((layer) => {
+        const allEntities: Entity[] = [];
+        layers.forEach((layer) => {
             allEntities.push(...layer.entities);
         });
         allEntities.forEach((ent) => {
@@ -138,12 +108,12 @@ const Diagram = forwardRef((props: DiagramProps, ref) => {
         const unionBound = Bound.getUnionBound(bounds);
         const deviceUnionBound = new Bound(ctf.worldToDevice_Point(unionBound.max), ctf.worldToDevice_Point(unionBound.min));
         const realMargin = margin ? margin : 5;
-        const widthRatio = (defaultLayer.canvas.clientWidth - 2 * realMargin) / deviceUnionBound.width;
-        const heightRatio = (defaultLayer.canvas.clientHeight - 2 * realMargin) / deviceUnionBound.height;
+        const widthRatio = (canvasRef.current!.clientWidth - 2 * realMargin) / deviceUnionBound.width;
+        const heightRatio = (canvasRef.current!.clientHeight - 2 * realMargin) / deviceUnionBound.height;
 
         const clientCenter = {
-            X: defaultLayer.canvas.clientWidth * 0.5,
-            Y: defaultLayer.canvas.clientHeight * 0.5
+            X: canvasRef.current!.clientWidth * 0.5,
+            Y: canvasRef.current!.clientHeight * 0.5
         };
 
         const moveVector = {
@@ -151,15 +121,33 @@ const Diagram = forwardRef((props: DiagramProps, ref) => {
             Y: clientCenter.Y - 0.5 * (deviceUnionBound.max.Y + deviceUnionBound.min.Y)
         };
 
-        ctf.displacement(moveVector);
-        ctf.zoom(clientCenter, Math.min(widthRatio, heightRatio));
+        const newCtf = new CoordTransform(ctf.worldOrigin, ctf.worldToDevice_Len);
+        newCtf.displacement(moveVector);
+        newCtf.zoom(clientCenter, Math.min(widthRatio, heightRatio));
+        setCtf(newCtf);
         setScale(scale * Math.min(widthRatio, heightRatio));
-        paint();
     };
 
     return (
-        <div id="container" className={mask ? "mask" : ""} ref={containerRef} />
+        <div id="container" className={mask ? "mask" : ""} ref={containerRef}>
+            <canvas
+                id="canvas"
+                ref={canvasRef}
+                onMouseDown={onMouseDown}
+                onMouseUp={onMouseUp}
+                onMouseMove={onMouseMove}
+                onWheel={onMouseWheel}
+                onDoubleClick={onMouseDbClick}
+                onKeyDown={onKeyDown}
+                tabIndex={-1}
+            >
+                Sorry, this browser does not support <i>canvas</i>!
+            </canvas>
+            {
+                layers.map((layer) => (<Canvas key={layer.name} ctf={ctf} color={layer.color} entities={layer.entities} />))
+            }
+        </div>
     );
-});
+};
 
 export default Diagram;

@@ -26,13 +26,17 @@ export default class CoordTransform {
     private _worldOrigin: Point; // the origin of world coord.
     private _worldToDevice_Len: number; // the ratio of world coord to device coord.
     
-    public constructor() {
-        this._worldOrigin = {X: 0, Y: 0};
-        this._worldToDevice_Len = 1;
+    public constructor(worldOrigin: Point = {X: 0, Y: 0}, worldToDevice_Len: number = 1) {
+        this._worldOrigin = worldOrigin;
+        this._worldToDevice_Len = worldToDevice_Len;
     }
 
     public get worldToDevice_Len () {
         return this._worldToDevice_Len;
+    }
+
+    public get worldOrigin () {
+        return this._worldOrigin;
     }
 
     public displacement: Displacement = (point1: Point, point2?: Point) => {
