@@ -8,24 +8,24 @@ import Canvas from "./Canvas";
 import Tool, {LocalZoom} from "../../tool";
 import Point from "../../util/point";
 
-export type ToolTypes = "Normal" | "LocalScale"; 
+export type ToolTypes = "Normal" | "LocalScale";
 interface DiagramProps {
     width: string;
     height: string;
     margin?: number;
     layers: Layer[];
     toolType: ToolTypes;
+    setToolType: (toolType: ToolTypes) => void;
 }
 let mouseDown = false;
 const Diagram: FC<DiagramProps> = (props) => {
-    const {height, width, margin, layers, toolType} = props;
+    const {height, width, margin, layers, toolType, setToolType} = props;
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [ctf, setCtf] = useState(new CoordTransform()); // coordinate transform
     const [scale, setScale] = useState<number>(1); // zoom scale
     const [mask, setMask] = useState<boolean>(false);
     const [tool, setTool] = useState<Tool>(); // tool: used to add some utility
-    // const [, updateDiagram] = useState({}); // update the canvas
 
     // set size of canvas
     const initCanvas = (canvas: HTMLCanvasElement) => {
@@ -36,6 +36,10 @@ const Diagram: FC<DiagramProps> = (props) => {
         canvas.style.backgroundColor = "transparent";
         canvas.style.position = "absolute";
     };
+
+    // const resetTool = () => {
+    //     setTool(undefined);
+    // };
 
     useEffect(() => {
         const container = containerRef.current as HTMLDivElement;
@@ -56,7 +60,7 @@ const Diagram: FC<DiagramProps> = (props) => {
                 newTool = undefined;
                 break;
             case "LocalScale":
-                newTool = new LocalZoom(canvasRef.current!, ctf, (newCtf: CoordTransform) => {setCtf(newCtf);});
+                newTool = new LocalZoom(canvasRef.current!, ctf, (newCtf: CoordTransform) => {setCtf(newCtf); setToolType("Normal");});
                 break;
             default:
                 break;
@@ -64,14 +68,17 @@ const Diagram: FC<DiagramProps> = (props) => {
         newTool?.addListeners();
         setTool(newTool);
     }, [toolType]);
-
+    
     const onMouseDown: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
+        if (tool !== undefined) return;
         mouseDown = true;
     };
     const onMouseUp: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
+        if (tool !== undefined) return;
         mouseDown = false;
     };
     const onMouseMove: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
+        if (tool !== undefined) return;
         if (mouseDown) {
             if (event.buttons === 4) {
                 // 平移
@@ -83,8 +90,8 @@ const Diagram: FC<DiagramProps> = (props) => {
     };
 
     const onMouseWheel: React.WheelEventHandler<HTMLCanvasElement> = (event) => {
+        if (tool !== undefined) return;
         const resScale = scale * (1 - event.deltaY / 1000);
-
         // set the zoom limit
         // let minScale = 0.001;
         // let maxScale = 1000;
@@ -106,9 +113,11 @@ const Diagram: FC<DiagramProps> = (props) => {
         setScale(resScale);
     };
     const onMouseDbClick: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
-        if (event.button === 0) {
-            zoomToBound();
+        if (tool !== undefined) {
+            console.log(tool);
+            return;
         }
+        zoomToBound();
     };
     const onKeyDown: React.KeyboardEventHandler<HTMLCanvasElement> = (event) => {
         const keyCode = (event as any).code;

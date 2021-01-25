@@ -8,7 +8,7 @@ export default abstract class Tool {
         this.canvas = canvas;
     }
     public abstract addListeners = () => {
-        
+
     };
     public abstract removeListeners: () => void;
     public changeTool(targetTool: Tool) {
@@ -17,7 +17,7 @@ export default abstract class Tool {
     }
 }
 
-export class LocalZoom extends Tool{
+export class LocalZoom extends Tool {
     private ctf: CoordTransform;
     /**
      * update diagram by new ctf
@@ -36,27 +36,33 @@ export class LocalZoom extends Tool{
         this.ctf = ctf;
         this.updateDiagramHandle = updateDiagramHandle;
     }
-    private onMouseUp = () => {
-        this.drag = false;
-        const ctx = this.canvas.getContext("2d")!;
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        const clientCenter = new Point(this.canvas.clientWidth * 0.5, this.canvas.clientHeight * 0.5);
-        const dynamicRectCenter = new Point(this.dynamicRect.startX + this.dynamicRect.w * 0.5, this.dynamicRect.startY + this.dynamicRect.h * 0.5);
-        const displaceVector = new Vector(clientCenter.X - dynamicRectCenter.X, clientCenter.Y - dynamicRectCenter.Y);
+    private onMouseUp = (event: MouseEvent) => {
+        if (event.button === 0 && event.detail === 1) {
+            this.drag = false;
+            const ctx = this.canvas.getContext("2d")!;
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            const clientCenter = new Point(this.canvas.clientWidth * 0.5, this.canvas.clientHeight * 0.5);
+            const dynamicRectCenter = new Point(this.dynamicRect.startX + this.dynamicRect.w * 0.5, this.dynamicRect.startY + this.dynamicRect.h * 0.5);
+            const displaceVector = new Vector(clientCenter.X - dynamicRectCenter.X, clientCenter.Y - dynamicRectCenter.Y);
 
-        const widthRatio = this.canvas.clientWidth / this.dynamicRect.w;
-        const heightRatio = this.canvas.clientHeight / this.dynamicRect.h;
-        
-        const newCtf = new CoordTransform(this.ctf.worldOrigin, this.ctf.worldToDevice_Len);
-        newCtf.displacement(displaceVector);
-        newCtf.zoom(clientCenter, Math.min(widthRatio, heightRatio));
-        this.ctf = newCtf;
-        this.updateDiagramHandle(this.ctf);
+            const widthRatio = this.canvas.clientWidth / Math.abs(this.dynamicRect.w);
+            const heightRatio = this.canvas.clientHeight / Math.abs(this.dynamicRect.h);
+
+            const newCtf = new CoordTransform(this.ctf.worldOrigin, this.ctf.worldToDevice_Len);
+            newCtf.displacement(displaceVector);
+            newCtf.zoom(clientCenter, Math.min(widthRatio, heightRatio));
+            this.ctf = newCtf;
+            // update diagram
+            this.removeListeners();
+            this.updateDiagramHandle(this.ctf);
+        }
     };
     private onMouseDown = (event: MouseEvent) => {
-        this.dynamicRect.startX = event.offsetX; // event.pageX - this.canvas.offsetLeft;
-        this.dynamicRect.startY = event.offsetY; // event.pageY - this.canvas.offsetTop;
-        this.drag = true;
+        if (event.button === 0 && event.detail === 1) {
+            this.dynamicRect.startX = event.offsetX; // event.pageX - this.canvas.offsetLeft;
+            this.dynamicRect.startY = event.offsetY; // event.pageY - this.canvas.offsetTop;
+            this.drag = true;
+        }
     };
     private onMouseMove = (event: MouseEvent) => {
         if (this.drag) {

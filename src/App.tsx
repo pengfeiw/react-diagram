@@ -53,7 +53,7 @@ const App: FC = () => {
             <button onClick={onClick3}>toolNormal</button>
             <button onClick={onClick4}>toolLocalScale</button>
             <div style={{width: "600px", height: "600px"}}>
-                <Diagram width="100%" height="100%" layers={layers} toolType={tool}/>
+                <Diagram width="100%" height="100%" layers={layers} toolType={tool} setToolType={(toolType: ToolTypes) => setTool(toolType)} />
             </div>
         </>
     );
