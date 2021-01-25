@@ -23,7 +23,7 @@ const Diagram: FC<DiagramProps> = (props) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [ctf, setCtf] = useState(new CoordTransform()); // coordinate transform
-    const [scale, setScale] = useState<number>(1); // zoom scale
+    // const [scale, setScale] = useState<number>(1); // zoom scale, used for set scale limit
     const [mask, setMask] = useState<boolean>(false);
     const [tool, setTool] = useState<Tool>(); // tool: used to add some utility
 
@@ -37,10 +37,6 @@ const Diagram: FC<DiagramProps> = (props) => {
         canvas.style.position = "absolute";
     };
 
-    // const resetTool = () => {
-    //     setTool(undefined);
-    // };
-
     useEffect(() => {
         const container = containerRef.current as HTMLDivElement;
         const canvas = canvasRef.current as HTMLCanvasElement;
@@ -53,7 +49,7 @@ const Diagram: FC<DiagramProps> = (props) => {
     }, []);
 
     useEffect(() => {
-        tool?.removeListeners();
+        tool?.reset();
         let newTool: Tool | undefined = undefined;
         switch (toolType) {
             case "Normal":
@@ -65,17 +61,23 @@ const Diagram: FC<DiagramProps> = (props) => {
             default:
                 break;
         }
-        newTool?.addListeners();
+        newTool?.initialize();
         setTool(newTool);
     }, [toolType]);
     
     const onMouseDown: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         if (tool !== undefined) return;
-        mouseDown = true;
+        if (event.button === 1) {
+            mouseDown = true;
+            canvasRef.current!.style.cursor = "grab";
+        }
     };
     const onMouseUp: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         if (tool !== undefined) return;
-        mouseDown = false;
+        if (event.button === 1) {
+            mouseDown = false;
+            canvasRef.current!.style.cursor = "auto";
+        }
     };
     const onMouseMove: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         if (tool !== undefined) return;
@@ -91,7 +93,7 @@ const Diagram: FC<DiagramProps> = (props) => {
 
     const onMouseWheel: React.WheelEventHandler<HTMLCanvasElement> = (event) => {
         if (tool !== undefined) return;
-        const resScale = scale * (1 - event.deltaY / 1000);
+        // const resScale = scale * (1 - event.deltaY / 1000);
         // set the zoom limit
         // let minScale = 0.001;
         // let maxScale = 1000;
@@ -110,7 +112,7 @@ const Diagram: FC<DiagramProps> = (props) => {
         // newCtf.zoom({X: event.clientX, Y: event.clientY}, (1 - event.deltaY / 1000));
         newCtf.zoom(new Point(event.clientX, event.clientY), (1 - event.deltaY / 1000));
         setCtf(newCtf);
-        setScale(resScale);
+        // setScale(resScale);
     };
     const onMouseDbClick: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         if (tool !== undefined) {
@@ -158,7 +160,7 @@ const Diagram: FC<DiagramProps> = (props) => {
         newCtf.displacement(moveVector);
         newCtf.zoom(clientCenter, Math.min(widthRatio, heightRatio));
         setCtf(newCtf);
-        setScale(scale * Math.min(widthRatio, heightRatio));
+        // setScale(scale * Math.min(widthRatio, heightRatio));
     };
 
     return (

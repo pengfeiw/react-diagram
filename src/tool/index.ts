@@ -7,14 +7,16 @@ export default abstract class Tool {
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
     }
-    public abstract addListeners = () => {
-
-    };
-    public abstract removeListeners: () => void;
-    public changeTool(targetTool: Tool) {
-        this.removeListeners();
-        targetTool.addListeners();
-    }
+    /**
+     * call it when install the tool on diagram.
+     * initialization, such as add event listener, change mouse cursor after install the tool.
+     */
+    public abstract initialize: () => void;
+    /**
+     * call it when uninstall the tool with diagram.
+     * do some reset work after uninstall the tool.
+     */
+    public abstract reset: () => void;
 }
 
 export class LocalZoom extends Tool {
@@ -37,8 +39,8 @@ export class LocalZoom extends Tool {
         this.updateDiagramHandle = updateDiagramHandle;
     }
     private onMouseUp = (event: MouseEvent) => {
-        if (event.button === 0 && event.detail === 1) {
-            this.drag = false;
+        this.drag = false;
+        if (event.button === 0 && this.dynamicRect.w !== 0 && this.dynamicRect.h !== 0) {
             const ctx = this.canvas.getContext("2d")!;
             ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             const clientCenter = new Point(this.canvas.clientWidth * 0.5, this.canvas.clientHeight * 0.5);
@@ -53,12 +55,12 @@ export class LocalZoom extends Tool {
             newCtf.zoom(clientCenter, Math.min(widthRatio, heightRatio));
             this.ctf = newCtf;
             // update diagram
-            this.removeListeners();
+            this.reset();
             this.updateDiagramHandle(this.ctf);
         }
     };
     private onMouseDown = (event: MouseEvent) => {
-        if (event.button === 0 && event.detail === 1) {
+        if (event.button === 0) {
             this.dynamicRect.startX = event.offsetX; // event.pageX - this.canvas.offsetLeft;
             this.dynamicRect.startY = event.offsetY; // event.pageY - this.canvas.offsetTop;
             this.drag = true;
@@ -76,15 +78,17 @@ export class LocalZoom extends Tool {
             ctx.closePath();
         }
     };
-    public addListeners = () => {
+    public initialize = () => {
+        this.canvas.style.cursor = "crosshair";
         this.canvas.addEventListener("mouseup", this.onMouseUp);
         this.canvas.addEventListener("mousedown", this.onMouseDown);
         this.canvas.addEventListener("mousemove", this.onMouseMove);
     };
 
-    public removeListeners = () => {
+    public reset = () => {
         this.canvas.removeEventListener("mouseup", this.onMouseUp);
         this.canvas.removeEventListener("mousedown", this.onMouseDown);
         this.canvas.removeEventListener("mousemove", this.onMouseMove);
+        this.canvas.style.cursor = "auto";
     };
 }
