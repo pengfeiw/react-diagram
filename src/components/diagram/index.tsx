@@ -6,6 +6,7 @@ import Bound from "../../util/bound";
 import Layer from "./layer";
 import Canvas from "./Canvas";
 import Tool, {LocalZoom} from "../../tool";
+import Point from "../../util/point";
 
 export type ToolTypes = "Normal" | "LocalScale"; 
 interface DiagramProps {
@@ -99,7 +100,8 @@ const Diagram: FC<DiagramProps> = (props) => {
         // }
 
         const newCtf = new CoordTransform(ctf.worldOrigin, ctf.worldToDevice_Len);
-        newCtf.zoom({X: event.clientX, Y: event.clientY}, (1 - event.deltaY / 1000));
+        // newCtf.zoom({X: event.clientX, Y: event.clientY}, (1 - event.deltaY / 1000));
+        newCtf.zoom(new Point(event.clientX, event.clientY), (1 - event.deltaY / 1000));
         setCtf(newCtf);
         setScale(resScale);
     };
@@ -136,11 +138,7 @@ const Diagram: FC<DiagramProps> = (props) => {
         const realMargin = margin ? margin : 5;
         const widthRatio = (canvasRef.current!.clientWidth - 2 * realMargin) / deviceUnionBound.width;
         const heightRatio = (canvasRef.current!.clientHeight - 2 * realMargin) / deviceUnionBound.height;
-
-        const clientCenter = {
-            X: canvasRef.current!.clientWidth * 0.5,
-            Y: canvasRef.current!.clientHeight * 0.5
-        };
+        const clientCenter = new Point(canvasRef.current!.clientWidth * 0.5, canvasRef.current!.clientHeight * 0.5);
 
         const moveVector = {
             X: clientCenter.X - 0.5 * (deviceUnionBound.max.X + deviceUnionBound.min.X),

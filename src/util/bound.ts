@@ -1,4 +1,4 @@
-import {Point} from "./interface";
+import Point from "./point";
 export default class Bound {
     private maxPoint: Point;
     private minPoint: Point;
@@ -22,7 +22,7 @@ export default class Bound {
     // get the boundingBox
     public static getUnionBound = (bounds: Bound[]) => {
         if (bounds.length === 0) {
-            return new Bound({X: 0, Y: 0}, {X: 0, Y: 0});
+            return new Bound(new Point(0, 0), new Point(0, 0));
         }
 
         let unionBound = bounds[0];
@@ -31,7 +31,7 @@ export default class Bound {
             const min_x = Math.min(unionBound.min.X, bounds[i].min.X);
             const max_y = Math.max(unionBound.max.Y, bounds[i].max.Y);
             const min_y = Math.min(unionBound.min.Y, bounds[i].min.Y);
-            unionBound = new Bound({X: max_x, Y: max_y}, {X: min_x, Y: min_y});
+            unionBound = new Bound(new Point(max_x, max_y), new Point(min_x, min_y));
         }
         return unionBound;
     }

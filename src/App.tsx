@@ -2,19 +2,20 @@ import Diagram, {ToolTypes} from "./components/diagram";
 import {FC, useEffect, useState} from "react";
 import {Line, Circle, Rectangle} from "./entity";
 import Layer from "./components/diagram/layer";
+import Point from "./util/point";
 
 const ents1 = [
-    new Line({X: 100, Y: 100}, {X: 200, Y: 200}, "red"),
-    new Circle({X: 100, Y: 100}, 50, "green"),
-    new Line({X: -100, Y: -30}, {X: 300, Y: 50}, "yellow"),
-    new Rectangle({X: 500, Y: 500}, 200, 400, "bylayer")
+    new Line(new Point(100, 100), new Point(200, 200), "red"),
+    new Circle(new Point(100, 100), 50, "green"),
+    new Line(new Point(-100, -30), new Point(300, 50), "yellow"),
+    new Rectangle(new Point(500, 500), 200, 400, "bylayer")
 ];
 
 const ents2 = [
-    new Line({X: 20, Y: 40}, {X: 200, Y: 200}, "green"),
-    new Circle({X: 10, Y: 100}, 50, "blue"),
-    new Line({X: -700, Y: -330}, {X: 300, Y: 50}, "bylayer"),
-    new Rectangle({X: 500, Y: 500}, 200, 400, "gray")
+    new Line(new Point(20, 40), new Point(200, 200), "green"),
+    new Circle(new Point(10, 100), 50, "blue"),
+    new Line(new Point(-700, -330), new Point(300, 50), "bylayer"),
+    new Rectangle(new Point(500, 500), 200, 400, "gray")
 ];
 
 const layer1 = new Layer("0", "black");

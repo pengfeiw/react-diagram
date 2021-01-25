@@ -1,5 +1,6 @@
 import CoordTransform from "../util/coordTrans";
-import {Vector} from "../util/interface";
+import Point from "../util/point";
+import Vector from "../util/vector";
 
 export default abstract class Tool {
     protected canvas: HTMLCanvasElement;
@@ -39,18 +40,9 @@ export class LocalZoom extends Tool{
         this.drag = false;
         const ctx = this.canvas.getContext("2d")!;
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        const dynamicRectCenter = {
-            X: this.dynamicRect.startX + this.dynamicRect.w * 0.5,
-            Y: this.dynamicRect.startY + this.dynamicRect.h * 0.5
-        };
-        const clientCenter = {
-            X: this.canvas.clientWidth * 0.5,
-            Y: this.canvas.clientHeight * 0.5
-        };
-        const displaceVector: Vector = {
-            X: clientCenter.X - dynamicRectCenter.X,
-            Y: clientCenter.Y - dynamicRectCenter.Y
-        };
+        const clientCenter = new Point(this.canvas.clientWidth * 0.5, this.canvas.clientHeight * 0.5);
+        const dynamicRectCenter = new Point(this.dynamicRect.startX + this.dynamicRect.w * 0.5, this.dynamicRect.startY + this.dynamicRect.h * 0.5);
+        const displaceVector = new Vector(clientCenter.X - dynamicRectCenter.X, clientCenter.Y - dynamicRectCenter.Y);
 
         const widthRatio = this.canvas.clientWidth / this.dynamicRect.w;
         const heightRatio = this.canvas.clientHeight / this.dynamicRect.h;

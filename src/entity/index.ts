@@ -1,8 +1,7 @@
 // Entity
 import CoordTransform from "../util/coordTrans";
-import {Point} from "../util/interface";
+import Point from "../util/point";
 import Bound from "../util/bound";
-export type {Point};
 
 export default abstract class Entity {
     /**
@@ -54,7 +53,7 @@ export class Line extends Entity {
         const max_x = Math.max(this.point1.X, this.point2.X);
         const min_y = Math.min(this.point1.Y, this.point2.Y);
         const max_y = Math.max(this.point1.Y, this.point2.Y);
-        return new Bound({X: max_x, Y: max_y}, {X: min_x, Y: min_y});
+        return new Bound(new Point(max_x, max_y), new Point(min_x, min_y));
     };
 }
 
@@ -85,15 +84,8 @@ export class Circle extends Entity {
     };
 
     public bound = () => {
-        const maxPoint = {
-            X: this.origin.X + this.radius,
-            Y: this.origin.Y + this.radius
-        };
-        const minPoint = {
-            X: this.origin.X - this.radius,
-            Y: this.origin.Y - this.radius
-        };
-        
+        const maxPoint = new Point(this.origin.X + this.radius, this.origin.Y + this.radius);
+        const minPoint = new Point(this.origin.X - this.radius, this.origin.Y - this.radius);
         return new Bound(maxPoint, minPoint);
     }
 }
@@ -130,10 +122,7 @@ export class Rectangle extends Entity {
         ctx.closePath();
     };
     public bound = () => {
-        const maxPoint = {
-            X: this.location.X + this.width,
-            Y: this.location.Y + this.height
-        };
+        const maxPoint = new Point(this.location.X + this.width, this.location.Y + this.height);
         const minPoint = this.location;
         return new Bound(maxPoint, minPoint);
     };
