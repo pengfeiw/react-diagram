@@ -5,22 +5,27 @@ import CoordTransform from "../../util/coordTrans";
 import Bound from "../../util/bound";
 import Layer from "./layer";
 import Canvas from "./Canvas";
+import Tool, {LocalZoom} from "../../tool";
 
+export type ToolTypes = "Normal" | "LocalScale"; 
 interface DiagramProps {
     width: string;
     height: string;
     scaleLimit?: number;
     margin?: number;
-    layers: Layer[]
+    layers: Layer[];
+    toolType: ToolTypes;
 }
 let mouseDown = false;
 const Diagram: FC<DiagramProps> = (props) => {
-    const {height, width, scaleLimit, margin, layers} = props;
+    const {height, width, scaleLimit, margin, layers, toolType} = props;
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [ctf, setCtf] = useState(new CoordTransform()); // coordinate transform
     const [scale, setScale] = useState<number>(1); // zoom scale
     const [mask, setMask] = useState<boolean>(false);
+    const [tool, setTool] = useState<Tool>(); // tool: used to add some utility
+    // const [, updateDiagram] = useState({}); // update the canvas
 
     // set size of canvas
     const initCanvas = (canvas: HTMLCanvasElement) => {
@@ -38,11 +43,27 @@ const Diagram: FC<DiagramProps> = (props) => {
         // set size of container
         container.style.width = width;
         container.style.height = height;
-
         // set operate canvas
         canvas.style.zIndex = "1";
         initCanvas(canvas);
     }, []);
+
+    useEffect(() => {
+        tool?.removeListeners();
+        let newTool: Tool | undefined = undefined;
+        switch (toolType) {
+            case "Normal":
+                newTool = undefined;
+                break;
+            case "LocalScale":
+                newTool = new LocalZoom(canvasRef.current!, ctf, (newCtf: CoordTransform) => {setCtf(newCtf);});
+                break;
+            default:
+                break;
+        }
+        newTool?.addListeners();
+        setTool(newTool);
+    }, [toolType]);
 
     const onMouseDown: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         mouseDown = true;
@@ -128,6 +149,8 @@ const Diagram: FC<DiagramProps> = (props) => {
         setScale(scale * Math.min(widthRatio, heightRatio));
     };
 
+    console.log(ctf.worldOrigin);
+    console.log(ctf.worldToDevice_Len);
     return (
         <div id="container" className={mask ? "mask" : ""} ref={containerRef}>
             <canvas

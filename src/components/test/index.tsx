@@ -13,7 +13,6 @@ const Test = (props: any) => {
     const canvas2Ref = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        debugger;
         const canvas2 = canvas2Ref.current as HTMLCanvasElement;
         const container = containerRef.current as HTMLDivElement;
         setCtx2(canvas2.getContext("2d"));

@@ -38,7 +38,7 @@ export default class CoordTransform {
     public get worldOrigin () {
         return this._worldOrigin;
     }
-
+    
     public displacement: Displacement = (point1: Point, point2?: Point) => {
         const moveVector: Vector = point2 ? {X: point2.X - point1.X, Y: point2.Y - point1.Y} : point1;
         this._worldOrigin = movePoint(this._worldOrigin, moveVector);
