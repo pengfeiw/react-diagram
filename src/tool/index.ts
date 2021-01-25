@@ -7,7 +7,7 @@ export default abstract class Tool {
         this.canvas = canvas;
     }
     public abstract addListeners = () => {
-        console.log("Tool add");
+        
     };
     public abstract removeListeners: () => void;
     public changeTool(targetTool: Tool) {
@@ -79,7 +79,6 @@ export class LocalZoom extends Tool{
         }
     };
     public addListeners = () => {
-        console.log("LocalZoom add");
         this.canvas.addEventListener("mouseup", this.onMouseUp);
         this.canvas.addEventListener("mousedown", this.onMouseDown);
         this.canvas.addEventListener("mousemove", this.onMouseMove);

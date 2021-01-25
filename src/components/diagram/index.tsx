@@ -110,7 +110,6 @@ const Diagram: FC<DiagramProps> = (props) => {
     };
     const onKeyDown: React.KeyboardEventHandler<HTMLCanvasElement> = (event) => {
         const keyCode = (event as any).code;
-        console.log(keyCode);
         switch (keyCode) {
             case "KeyR":
                 setMask(true);
@@ -155,8 +154,6 @@ const Diagram: FC<DiagramProps> = (props) => {
         setScale(scale * Math.min(widthRatio, heightRatio));
     };
 
-    console.log(ctf.worldOrigin);
-    console.log(ctf.worldToDevice_Len);
     return (
         <div id="container" className={mask ? "mask" : ""} ref={containerRef}>
             <canvas
