@@ -3,7 +3,6 @@ import {Vector} from "../util/interface";
 
 export default abstract class Tool {
     protected canvas: HTMLCanvasElement;
-    
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
     }

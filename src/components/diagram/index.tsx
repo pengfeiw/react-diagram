@@ -11,14 +11,13 @@ export type ToolTypes = "Normal" | "LocalScale";
 interface DiagramProps {
     width: string;
     height: string;
-    scaleLimit?: number;
     margin?: number;
     layers: Layer[];
     toolType: ToolTypes;
 }
 let mouseDown = false;
 const Diagram: FC<DiagramProps> = (props) => {
-    const {height, width, scaleLimit, margin, layers, toolType} = props;
+    const {height, width, margin, layers, toolType} = props;
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [ctf, setCtf] = useState(new CoordTransform()); // coordinate transform
@@ -84,18 +83,25 @@ const Diagram: FC<DiagramProps> = (props) => {
 
     const onMouseWheel: React.WheelEventHandler<HTMLCanvasElement> = (event) => {
         const resScale = scale * (1 - event.deltaY / 1000);
-        let minScale = 0.001;
-        let maxScale = 1000;
-        if (scaleLimit !== undefined) {
-            minScale = 1 / scaleLimit;
-            maxScale = scaleLimit;
-        }
-        if (resScale <= maxScale && resScale >= minScale) {
-            const newCtf = new CoordTransform(ctf.worldOrigin, ctf.worldToDevice_Len);
-            newCtf.zoom({X: event.clientX, Y: event.clientY}, (1 - event.deltaY / 1000));
-            setCtf(newCtf);
-            setScale(resScale);
-        }
+
+        // set the zoom limit
+        // let minScale = 0.001;
+        // let maxScale = 1000;
+        // if (scaleLimit !== undefined) {
+        //     minScale = 1 / scaleLimit;
+        //     maxScale = scaleLimit;
+        // }
+        // if (resScale <= maxScale && resScale >= minScale) {
+        //     const newCtf = new CoordTransform(ctf.worldOrigin, ctf.worldToDevice_Len);
+        //     newCtf.zoom({X: event.clientX, Y: event.clientY}, (1 - event.deltaY / 1000));
+        //     setCtf(newCtf);
+        //     setScale(resScale);
+        // }
+
+        const newCtf = new CoordTransform(ctf.worldOrigin, ctf.worldToDevice_Len);
+        newCtf.zoom({X: event.clientX, Y: event.clientY}, (1 - event.deltaY / 1000));
+        setCtf(newCtf);
+        setScale(resScale);
     };
     const onMouseDbClick: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
         if (event.button === 0) {
