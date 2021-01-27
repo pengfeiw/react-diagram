@@ -17,7 +17,7 @@ const scalePoint = (point: Point, scaleOrigin: Point, scale: number): Point => {
 }
 
 export default class CoordTransform {
-    private _worldOrigin: Point; // the origin of world coord.
+    private _worldOrigin: Point; // it's a device point, stand for the origin of world coord.
     private _worldToDevice_Len: number; // the ratio of world coord to device coord.
     
     public constructor(worldOrigin: Point = new Point(0, 0), worldToDevice_Len: number = 1) {
@@ -27,6 +27,10 @@ export default class CoordTransform {
 
     public get worldToDevice_Len () {
         return this._worldToDevice_Len;
+    }
+
+    public get deviceToWorld_Len () {
+        return 1 / this._worldToDevice_Len;
     }
 
     public get worldOrigin () {
@@ -49,6 +53,12 @@ export default class CoordTransform {
     public worldToDevice_Point = (point: Point) => {
         let resPnt = movePoint(point, this._worldOrigin);
         resPnt = scalePoint(resPnt, this._worldOrigin, this._worldToDevice_Len);
+        return resPnt;
+    };
+
+    public deviceToWorld_Point = (point: Point) => {
+        let resPnt = movePoint(point, new Vector(-this._worldOrigin.X, -this._worldOrigin.Y));
+        resPnt = scalePoint(resPnt, new Point(0, 0), 1 / this._worldToDevice_Len);
         return resPnt;
     };
 }

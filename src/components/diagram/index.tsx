@@ -1,11 +1,11 @@
 import {FC, useEffect, useRef, useState} from "react";
-import Entity from "../../entity";
+import Entity, {Rectangle} from "../../entity";
 import "./index.css";
 import CoordTransform from "../../util/coordTrans";
 import Bound from "../../util/bound";
 import Layer from "./layer";
 import Canvas from "./Canvas";
-import Tool, {LocalZoom} from "../../tool";
+import Tool, {LocalZoom, Normal} from "../../tool";
 import Point from "../../util/point";
 
 export type ToolTypes = "Normal" | "LocalScale";
@@ -24,8 +24,8 @@ const Diagram: FC<DiagramProps> = (props) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [ctf, setCtf] = useState(new CoordTransform()); // coordinate transform
     // const [scale, setScale] = useState<number>(1); // zoom scale, used for set scale limit
-    const [mask, setMask] = useState<boolean>(false);
     const [tool, setTool] = useState<Tool>(); // tool: used to add some utility
+    const [, forceUpdate] = useState({});
 
     // set size of canvas
     const initCanvas = (canvas: HTMLCanvasElement) => {
@@ -36,6 +36,58 @@ const Diagram: FC<DiagramProps> = (props) => {
         canvas.style.backgroundColor = "transparent";
         canvas.style.position = "absolute";
     };
+
+    const selectedEntitiesByRect = (rectangle: Rectangle) => {
+        // convert device rectangle to world rectangle
+        const lt = rectangle.location;
+        const w = rectangle.width;
+        const h = rectangle.height;
+        const w_lt = ctf.deviceToWorld_Point(lt);
+        const w_w = ctf.deviceToWorld_Len * w;
+        const w_h = ctf.deviceToWorld_Len * h;
+        const worldRect = new Rectangle(w_lt, w_w, w_h);
+
+        for(let i = 0; i < layers.length; i++) {
+            const layer = layers[i];
+            let isSelected = false;
+            const newEnts = layer.entities.map((ent) => {
+                if (ent.isIntersectWithReact(worldRect)) {
+                    ent.selected = true;
+                    isSelected = true;
+                }
+                return ent;
+            });
+            if (isSelected) {
+                layer.clear();
+                layer.addEntity(newEnts);
+            }
+        }
+
+        // force to update, make the change in layers
+        forceUpdate({});
+    };
+
+    // unselect all entities
+    const unselectAll = () => {
+        for (let i = 0; i < layers.length; i++) {
+            // layers[i].entities.forEach(ent => ent.selected = false);
+            let updatelayer = false;
+            const newEnts = layers[i].entities.map((ent) => {
+                if (ent.selected) {
+                    ent.selected = false;
+                    updatelayer = true;
+                }
+                return ent;
+            })
+
+            if (updatelayer) {
+                layers[i].clear();
+                layers[i].addEntity(newEnts);
+            }
+        }
+        // force update
+        forceUpdate({});
+    }
 
     useEffect(() => {
         const container = containerRef.current as HTMLDivElement;
@@ -53,7 +105,7 @@ const Diagram: FC<DiagramProps> = (props) => {
         let newTool: Tool | undefined = undefined;
         switch (toolType) {
             case "Normal":
-                newTool = undefined;
+                newTool = new Normal(canvasRef.current!, selectedEntitiesByRect);
                 break;
             case "LocalScale":
                 newTool = new LocalZoom(canvasRef.current!, ctf, (newCtf: CoordTransform) => {setCtf(newCtf); setToolType("Normal");});
@@ -63,24 +115,24 @@ const Diagram: FC<DiagramProps> = (props) => {
         }
         newTool?.initialize();
         setTool(newTool);
-    }, [toolType]);
+    }, [toolType, layers, ctf]);
     
     const onMouseDown: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
-        if (tool !== undefined) return;
+        if (toolType !== "Normal") return;
         if (event.button === 1) {
             mouseDown = true;
             canvasRef.current!.style.cursor = "grab";
         }
     };
     const onMouseUp: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
-        if (tool !== undefined) return;
+        if (toolType !== "Normal") return;
         if (event.button === 1) {
             mouseDown = false;
             canvasRef.current!.style.cursor = "auto";
         }
     };
     const onMouseMove: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
-        if (tool !== undefined) return;
+        if (toolType !== "Normal") return;
         if (mouseDown) {
             if (event.buttons === 4) {
                 // 平移
@@ -92,7 +144,7 @@ const Diagram: FC<DiagramProps> = (props) => {
     };
 
     const onMouseWheel: React.WheelEventHandler<HTMLCanvasElement> = (event) => {
-        if (tool !== undefined) return;
+        if (toolType !== "Normal") return;
         // const resScale = scale * (1 - event.deltaY / 1000);
         // set the zoom limit
         // let minScale = 0.001;
@@ -115,8 +167,7 @@ const Diagram: FC<DiagramProps> = (props) => {
         // setScale(resScale);
     };
     const onMouseDbClick: React.MouseEventHandler<HTMLCanvasElement> = (event) => {
-        if (tool !== undefined) {
-            console.log(tool);
+        if (toolType !== "Normal") {
             return;
         }
         zoomToBound();
@@ -125,10 +176,9 @@ const Diagram: FC<DiagramProps> = (props) => {
         const keyCode = (event as any).code;
         switch (keyCode) {
             case "KeyR":
-                setMask(true);
                 break;
             case "Escape":
-                setMask(false);
+                unselectAll();
                 break;
             default:
                 break;
@@ -163,8 +213,10 @@ const Diagram: FC<DiagramProps> = (props) => {
         // setScale(scale * Math.min(widthRatio, heightRatio));
     };
 
+    // selectedEntitiesByRect(new Rectangle(new Point(0, 0), 0, 0));
+
     return (
-        <div id="container" className={mask ? "mask" : ""} ref={containerRef}>
+        <div id="container" ref={containerRef}>
             <canvas
                 id="canvas"
                 ref={canvasRef}

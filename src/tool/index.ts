@@ -1,3 +1,4 @@
+import {Rectangle} from "../entity";
 import CoordTransform from "../util/coordTrans";
 import Point from "../util/point";
 import Vector from "../util/vector";
@@ -90,5 +91,58 @@ export class LocalZoom extends Tool {
         this.canvas.removeEventListener("mousedown", this.onMouseDown);
         this.canvas.removeEventListener("mousemove", this.onMouseMove);
         this.canvas.style.cursor = "auto";
+    };
+}
+
+// draw Box to choose entity
+export class Normal extends Tool {
+    private updateDiagramHandle: (rectangle: Rectangle) => void;
+    private drag = false;
+    private dynamicRect = {
+        startX: 0,
+        startY: 0,
+        w: 0,
+        h: 0
+    };
+    constructor(canvas: HTMLCanvasElement, updateDiagramHandle: (retangle: Rectangle) => void) {
+        super(canvas);
+        this.updateDiagramHandle = updateDiagramHandle;
+    }
+    private onMouseUp = (event: MouseEvent) => {
+        this.drag = false;
+        if (event.button === 0 && this.dynamicRect.w !== 0 && this.dynamicRect.h !== 0) {
+            const ctx = this.canvas.getContext("2d")!;
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.updateDiagramHandle(new Rectangle(new Point(this.dynamicRect.startX, this.dynamicRect.startY), this.dynamicRect.w, this.dynamicRect.h));
+        }
+    };
+    private onMouseDown = (event: MouseEvent) => {
+        if (event.button === 0) {
+            this.dynamicRect.startX = event.offsetX; // event.pageX - this.canvas.offsetLeft;
+            this.dynamicRect.startY = event.offsetY; // event.pageY - this.canvas.offsetTop;
+            this.drag = true;
+        }
+    };
+    private onMouseMove = (event: MouseEvent) => {
+        if (this.drag) {
+            this.dynamicRect.w = event.offsetX - this.dynamicRect.startX;
+            this.dynamicRect.h = event.offsetY - this.dynamicRect.startY;
+            const ctx = this.canvas.getContext("2d")!;
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            ctx.beginPath();
+            ctx.setLineDash([6]);
+            ctx.strokeRect(this.dynamicRect.startX, this.dynamicRect.startY, this.dynamicRect.w, this.dynamicRect.h);
+            ctx.closePath();
+        }
+    };
+    public initialize = () => {
+        this.canvas.addEventListener("mouseup", this.onMouseUp);
+        this.canvas.addEventListener("mousedown", this.onMouseDown);
+        this.canvas.addEventListener("mousemove", this.onMouseMove);
+    };
+    public reset = () => {
+        this.canvas.removeEventListener("mouseup", this.onMouseUp);
+        this.canvas.removeEventListener("mousedown", this.onMouseDown);
+        this.canvas.removeEventListener("mousemove", this.onMouseMove);
     };
 }

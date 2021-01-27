@@ -18,6 +18,10 @@ const ents2 = [
     new Rectangle(new Point(500, 500), 200, 400, "gray")
 ];
 
+// 测试
+// ents1.forEach(ent => ent.selected = true);
+// ents2.forEach(ent => ent.selected = true);
+
 const layer1 = new Layer("0", "black");
 const layer2 = new Layer("1", "red");
 layer1.addEntity(ents1);
